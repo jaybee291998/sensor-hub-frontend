@@ -7,6 +7,7 @@
         'sensorhub.routes',
         'sensorhub.authentication',
         'sensorhub.home',
+        'sensorhub.channel',
     ]);
 
     angular
