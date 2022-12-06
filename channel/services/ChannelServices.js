@@ -9,6 +9,7 @@
     function Channel($http){
         let Channel = {
             create: create,
+            retrieveAll: retrieveAll,
         };
 
         return Channel;
@@ -25,6 +26,21 @@
             function channelCreateErrorFn(data, status, headers, config){
                 console.log("create channel failed");
                 return data;
+            }
+        }
+
+        function retrieveAll(){
+            return $http.get('http://127.0.0.1:8000/channel/channel-list-api/')
+                .then(channelRetrieveAllSuccessFn, channelRetrieveAllErrorFn);
+
+            function channelRetrieveAllSuccessFn(values){
+                console.log("Channel Retrieve All Success");
+                return values;
+            }
+
+            function channelRetrieveAllErrorFn(response){
+                console.log(response);
+                return response;
             }
         }
     }

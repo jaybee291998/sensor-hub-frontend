@@ -4,6 +4,7 @@
         .module('sensorhub.channel',[
             'sensorhub.channel.controllers',
             'sensorhub.channel.services',
+            'sensorhub.channel.directives',
         ]);
     
         angular
@@ -11,4 +12,7 @@
         
         angular
             .module('sensorhub.channel.services', []);
+
+        angular
+            .module('sensorhub.channel.directives', []);
 })();

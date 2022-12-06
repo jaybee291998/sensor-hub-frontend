@@ -29,6 +29,11 @@
                 controllerAs: 'vm',
                 templateUrl: 'channel/pages/create-channel.html'
             })
+            .when('/channel/list', {
+                controller: 'RetrieveAllChannelController',
+                controllerAs: 'vm',
+                templateUrl: 'channel/pages/list-channel.html'
+            })
             .otherwise('/');
     }
 })();

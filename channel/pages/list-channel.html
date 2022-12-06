@@ -1,0 +1,8 @@
+<div>
+    <div ng-show="error" ng-bind="error"></div>
+    <div ng-show="message" ng-bind="message"></div>
+    <div ng-show="channels" ng-repeat="channel in channels">
+        <!-- <b>{{channel.name}}</b> -->
+        <my-channel info="channel"></my-channel>
+    </div>
+</div>
