@@ -16,6 +16,7 @@
                 getAuthenticatedAccount: getAuthenticatedAccount,
                 unAuthenticate: unAuthenticate,
                 authenticatedOrRedirect: authenticatedOrRedirect,
+                setAuthorizationHeader: setAuthorizationHeader,
             }
 
             return Authentication;
@@ -72,12 +73,19 @@
                 let expireDate = new Date();
                 expireDate.setDate(expireDate.getDate() + 1);
                 $cookies.putObject('authenticatedAccount', account, {'expires':expireDate});
+                // set authorization header
+                Authentication.setAuthorizationHeader();
             }
 
             function getAuthenticatedAccount(){
                 let account = $cookies.getObject('authenticatedAccount')
                 if(!account) return;
                 return account;
+            }
+
+            function setAuthorizationHeader(){
+                $http.defaults.headers.common['Authorization'] = "Token " + Authentication.getAuthenticatedAccount().token;
+                console.log("Authentication Header Set");
             }
         }
 })();

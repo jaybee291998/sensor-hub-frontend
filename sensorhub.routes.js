@@ -34,6 +34,16 @@
                 controllerAs: 'vm',
                 templateUrl: 'channel/pages/list-channel.html'
             })
+            .when('/channel/:channel_id', {
+                controller: 'ChannelHomeController',
+                controllerAs: 'vm',
+                templateUrl: 'channel/pages/channel-home.html'
+            })
+            .when('/channel/:channel_id/create', {
+                controller: 'CreateFieldController',
+                controllerAs: 'vm',
+                templateUrl: 'channel/pages/create-field.html'
+            })
             .otherwise('/');
     }
 })();

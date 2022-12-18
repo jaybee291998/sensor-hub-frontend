@@ -28,7 +28,11 @@
      */
     function run($http, Authentication){
         if(Authentication.isAuthenticated()){
-            $http.defaults.headers.common['Authorization'] = "Token " + Authentication.getAuthenticatedAccount().token;
+            Authentication.setAuthorizationHeader();
+            console.log("Authenticated");
+            console.log(Authentication.getAuthenticatedAccount());
+        }else{
+            console.log("Not Authenticated");
         }
     }
 })();
