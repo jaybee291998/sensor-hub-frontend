@@ -18,7 +18,7 @@
         return Channel;
 
         function create(channelData){
-            return $http.post('http://127.0.0.1:8000/channel/channel-list-api/', channelData)
+            return $http.post(`${myapi_link}/channel/channel-list-api/`, channelData)
                 .then(channelCreateSuccessFn, channelCreateErrorFn);
 
             function channelCreateSuccessFn(data, status, headers, config){
@@ -33,7 +33,7 @@
         }
 
         function retrieveAll(){
-            return $http.get('http://127.0.0.1:8000/channel/channel-list-api/')
+            return $http.get(`${myapi_link}/channel/channel-list-api/`)
                 .then(channelRetrieveAllSuccessFn, channelRetrieveAllErrorFn);
 
             function channelRetrieveAllSuccessFn(values){
@@ -48,7 +48,7 @@
         }
 
         function retrieveAllFields(channel_id){
-            return $http.get('http://127.0.0.1:8000/channel/field-list/'+channel_id)
+            return $http.get(`${myapi_link}/channel/field-list/`+channel_id)
                 .then(retrieveSuccessFn, retrieveErrorFn);
 
             function retrieveSuccessFn(values){
@@ -63,7 +63,7 @@
         }
 
         function createField(fieldData){
-            return $http.post('http://127.0.0.1:8000/channel/field-list/'+fieldData.channel_id+"/", fieldData)
+            return $http.post(`${myapi_link}/channel/field-list/`+fieldData.channel_id+"/", fieldData)
                 .then(createFieldSuccessFn, createFieldErrorFn);
 
             function createFieldSuccessFn(values){
@@ -78,7 +78,7 @@
         }
 
         function createFields(fieldsData, channel_id){
-            return $http.post('http://127.0.0.1:8000/channel/field-list/'+channel_id+"/?bulk=true", fieldsData)
+            return $http.post(`${myapi_link}/channel/field-list/`+channel_id+"/?bulk=true", fieldsData)
                 .then(createFieldSuccessFn, createFieldErrorFn);
 
             function createFieldSuccessFn(values){

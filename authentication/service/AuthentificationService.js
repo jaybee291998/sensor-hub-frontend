@@ -22,7 +22,7 @@
             return Authentication;
 
             function login(email, password){
-                return $http.post('http://127.0.0.1:8000/account/login/', {
+                return $http.post(`${myapi_link}/account/login/`, {
                     email: email, password: password
                 }).then(loginSuccessFn, loginErrorFn);
 
@@ -38,7 +38,7 @@
             }
 
             function register(email, password){
-                return $http.post('http://127.0.0.1:8000/account/register/', {
+                return $http.post(`${myapi_link}/account/register/`, {
                     email: email, password: password
                 }).then(registerSuccessFn, registerErrorFn);
 
