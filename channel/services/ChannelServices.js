@@ -11,6 +11,7 @@
             create: create,
             retrieveAll: retrieveAll,
             retrieveAllFields: retrieveAllFields,
+            retrieveAllChannelEntries: retrieveAllChannelEntries,
             createField: createField,
             createFields: createFields
         };
@@ -58,6 +59,21 @@
 
             function retrieveErrorFn(response){
                 console.log("failed to retrieve fields");
+                return response;
+            }
+        }
+
+        function retrieveAllChannelEntries(channel_id){
+            return $http.get(`${myapi_link}/channel/${channel_id}/`)
+                .then(retrieveSuccessFn, retrieveErrorFn);
+
+            function retrieveSuccessFn(values){
+                console.log("retrieve all channel entries success");
+                return values;
+            }
+
+            function retrieveErrorFn(response){
+                console.log("failed to retrieve channel entries");
                 return response;
             }
         }
