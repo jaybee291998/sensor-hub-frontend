@@ -164,6 +164,16 @@
                     let chart = make_chart(data, field_data.name, field_data.name);
                     cleaned_data[field_data.name]['chart'] = chart;
                 });
+
+                $scope.widgets = [];
+                field_data.forEach(field_data => {
+                    let field_name = field_data.name;
+                    let data = {name:field_name, value:cleaned_data[field_name]['data'].at(-1)}
+                    $scope.widgets.push(data);
+                });
+                $scope.latest_time = timestamp_data.at(-1);
+
+                console.log($scope.widget);
             }
         }
 })();

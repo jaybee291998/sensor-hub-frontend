@@ -1,7 +1,10 @@
 <div>
     <h1>{{name}}</h1>
-    <div ng-repeat="field in fields">
-        <b>{{field.name}}</b>
+    <div ng-repeat="widget in widgets">
+        <b>{{widget.name}}</b>:{{widget.value}} 
+    </div>
+    <div>
+        <b>Timestamp:</b>{{latest_time}}
     </div>
     <div id="canvas_div_id">
 
