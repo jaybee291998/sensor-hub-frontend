@@ -63,8 +63,8 @@
             }
         }
 
-        function retrieveAllChannelEntries(channel_id){
-            return $http.get(`${myapi_link}/channel/${channel_id}/`)
+        function retrieveAllChannelEntries(channel_id, number_of_hours){
+            return $http.get(`${myapi_link}/channel/${channel_id}/?number_of_hours=${number_of_hours}`)
                 .then(retrieveSuccessFn, retrieveErrorFn);
 
             function retrieveSuccessFn(values){
@@ -74,6 +74,7 @@
 
             function retrieveErrorFn(response){
                 console.log("failed to retrieve channel entries");
+                console.log(response);
                 return response;
             }
         }

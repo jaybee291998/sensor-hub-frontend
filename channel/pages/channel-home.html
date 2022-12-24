@@ -6,6 +6,9 @@
     <div>
         <b>Timestamp:</b>{{latest_time}}
     </div>
+    <select name="number-of-hours" ng-model="number_of_hours" ng-change="test()">
+        <option ng-repeat="option in options" value="{{option.value}}">{{option.name}}</option>
+    </select>
     <div id="canvas_div_id">
 
     </div>

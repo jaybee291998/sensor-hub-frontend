@@ -14,30 +14,33 @@
             let field_data;
             let channel_entries;
             let sample_data;
-            let p = Channel.retrieveAllFields($routeParams.channel_id);
-            p.then(function(value){
-                if(value.status < 200 || value.status > 299){
-                    $scope.error = value.data.message;
-                    console.log(value);
-                }else{
-                    console.log(value);
-                    $scope.fields = value.data;
-                    field_data = value.data;
-                    p = Channel.retrieveAllChannelEntries($routeParams.channel_id);
-                    p.then(function(value){
-                        if(value.status < 200 || value.status > 299){
-                            $scope.error = value.data.message;
-                            console.log(value);
-                        }else{
-                            console.log(value);
-                            channel_entries = value.data;
-                            init2();
-                            // $scope.fields = value.data;
-        
-                        }
-                    });
-                }
-            });
+            let cleaned_data = {};
+            function get_data(){
+                let p = Channel.retrieveAllFields($routeParams.channel_id);
+                p.then(function(value){
+                    if(value.status < 200 || value.status > 299){
+                        $scope.error = value.data.message;
+                        console.log(value);
+                    }else{
+                        console.log(value);
+                        $scope.fields = value.data;
+                        field_data = value.data;
+                        p = Channel.retrieveAllChannelEntries($routeParams.channel_id, $scope.number_of_hours);
+                        p.then(function(value){
+                            if(value.status < 200 || value.status > 299){
+                                $scope.error = value.data.message;
+                                console.log(value);
+                            }else{
+                                console.log(value);
+                                channel_entries = value.data;
+                                init2();
+                                // $scope.fields = value.data;
+            
+                            }
+                        });
+                    }
+                });
+            }
 
 
             // convert raw timestamp into a more huma readbable format
@@ -143,8 +146,7 @@
             }
 
             const init2 = () => {
-                sample_data = channel_entries.slice(-200);
-                let cleaned_data = {};
+                sample_data = channel_entries;
                 field_data.forEach(field_data => {
                     cleaned_data[field_data.name] = {data:[]};
                 });
@@ -175,5 +177,36 @@
 
                 console.log($scope.widget);
             }
+
+            const deleteCharts = () =>{
+                field_data.forEach(field_data => {
+                    cleaned_data[field_data.name]['chart'].destroy();
+                });
+                chartDiv.innerHTML = "";
+            }
+
+            $scope.options = [
+                {name:"1 hour", value:1},
+                {name:"2 hours", value:2},
+                {name:"3 hours", value:3},
+                {name:"4 hours", value:4},
+                {name:"5 hours", value:5},
+                {name:"6 hours", value:6},
+                {name:"7 hours", value:7},
+                {name:"8 hours", value:8},
+                {name:"9 hours", value:9},
+                {name:"10 hours", value:10},
+            ];
+
+            $scope.number_of_hours = 1;
+            
+
+            $scope.test = () => {
+                console.log($scope.number_of_hours);
+                deleteCharts();
+                get_data();
+            }
+
+            get_data();
         }
 })();
