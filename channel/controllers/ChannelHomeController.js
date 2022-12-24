@@ -23,20 +23,19 @@
                     console.log(value);
                     $scope.fields = value.data;
                     field_data = value.data;
-                }
-            });
-
-            p = Channel.retrieveAllChannelEntries($routeParams.channel_id);
-            p.then(function(value){
-                if(value.status < 200 || value.status > 299){
-                    $scope.error = value.data.message;
-                    console.log(value);
-                }else{
-                    console.log(value);
-                    channel_entries = value.data;
-                    init();
-                    // $scope.fields = value.data;
-
+                    p = Channel.retrieveAllChannelEntries($routeParams.channel_id);
+                    p.then(function(value){
+                        if(value.status < 200 || value.status > 299){
+                            $scope.error = value.data.message;
+                            console.log(value);
+                        }else{
+                            console.log(value);
+                            channel_entries = value.data;
+                            init2();
+                            // $scope.fields = value.data;
+        
+                        }
+                    });
                 }
             });
 
@@ -68,11 +67,11 @@
                 return `${date} ${time}`;
             }
 
-            const make_chart = (chart_data, label) => {
+            const make_chart = (chart_data, label, id) => {
                 // create a new canvas inside the canvas div
-                canvasDiv.innerHTML = '';
+                const canvasDiv = document.createElement('div');
                 const ctx = document.createElement('canvas');
-                ctx.id = 'myChart';
+                ctx.id = id;
                 
                 // create the dataset that will be used by the chart
                 let dataset = {
@@ -92,13 +91,16 @@
                     options:{
                         scales:{
                             y:{
-                                beginAtZero:true
+                                // beginAtZero:true
                             }
                         }
                     }
                 });
     
                 canvasDiv.appendChild(ctx);
+                chartDiv.appendChild(canvasDiv);
+
+                return myChart;
     
             }
             // generate a random rgba color
@@ -114,9 +116,7 @@
                 }
                 return colors;
             }
-            let canvasDiv = document.getElementById('canvas_div_id');
-            let data = {data:[1,2,3], labels:['m','n','o']};
-            make_chart(data, "test");
+            let chartDiv = document.getElementById('canvas_div_id');
 
             const init = () =>{
                 sample_data = channel_entries.slice(-200);
@@ -124,14 +124,46 @@
                 let temperature_data = [];
                 let humidity_data = [];
                 let date_data = [];
+                let pressure_data = [];
                 sample_data.forEach(channelEntry => {
                     temperature_data.push(parseFloat(channelEntry["field1"]));
                     humidity_data.push(parseFloat(channelEntry['field2']));
                     date_data.push(convert_time(channelEntry['timestamp'].slice(11, 19)));
+                    pressure_data.push(parseFloat(channelEntry['field3']));
                 });
                 // console.log(date_data);
                 let data = {data:temperature_data, labels:date_data};
-                make_chart(data, "temperature");
+                make_chart(data, "temperature", "id");
+                data['data'] = humidity_data;
+                make_chart(data, "humidity", "h");
+                data['pressure'] = pressure_data;
+                let myChart = make_chart(data, "pressure", "p");
+
+                // myChart.destroy();
+            }
+
+            const init2 = () => {
+                sample_data = channel_entries.slice(-200);
+                let cleaned_data = {};
+                field_data.forEach(field_data => {
+                    cleaned_data[field_data.name] = {data:[]};
+                });
+                let timestamp_data = [];
+                sample_data.forEach(channelEntry => {
+                    let field_num = 1;
+                    field_data.forEach(field_data => {
+                        cleaned_data[field_data.name]['data'].push(parseFloat(channelEntry[`field${field_num}`]));
+                        field_num++;
+                    });
+                    timestamp_data.push(convert_time(channelEntry['timestamp'].slice(11,19)));
+                });
+                console.log(cleaned_data);
+
+                field_data.forEach(field_data => {
+                    let data = {data:cleaned_data[field_data.name]['data'], labels:timestamp_data};
+                    let chart = make_chart(data, field_data.name, field_data.name);
+                    cleaned_data[field_data.name]['chart'] = chart;
+                });
             }
         }
 })();
