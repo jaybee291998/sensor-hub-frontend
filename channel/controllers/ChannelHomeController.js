@@ -11,6 +11,10 @@
             const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
             $scope.channel_id = $routeParams.channel_id;
             $scope.name = $routeParams.channel_id;
+            $scope.show_chart = true;
+            $scope.table_data;
+            $scope.field_names = [];
+            $scope.actual_field_names = [];
             let field_data;
             let channel_entries;
             let sample_data;
@@ -24,6 +28,10 @@
                     }else{
                         console.log(value);
                         $scope.fields = value.data;
+                        $scope.actual_field_names = [];
+                        $scope.fields.forEach(field => $scope.actual_field_names.push(field.name));
+                        $scope.actual_field_names.push('timestamp');
+                        console.log($scope.actual_field_names);
                         field_data = value.data;
                         p = Channel.retrieveAllChannelEntries($routeParams.channel_id, $scope.number_of_hours);
                         p.then(function(value){
@@ -33,6 +41,17 @@
                             }else{
                                 console.log(value);
                                 channel_entries = value.data;
+                                $scope.table_data = value.data.map(channel_entry => {
+                                    let new_element = {...channel_entry};
+                                    new_element.timestamp = processDateStr(new_element.timestamp);
+                                    return new_element;
+                                });
+                                $scope.field_names = [];
+                                console.log($scope.table_data);
+                                for(let key in value.data[0]){
+                                    $scope.field_names.push(key);
+                                }
+                                console.log($scope.field_names);
                                 init2();
                                 // $scope.fields = value.data;
             
@@ -208,5 +227,9 @@
             }
 
             get_data();
+
+            $scope.toggle = () => {
+                $scope.show_chart = !$scope.show_chart;
+            }
         }
 })();

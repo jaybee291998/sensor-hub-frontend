@@ -1,5 +1,10 @@
 <div>
+    <a href="#/channel/list">channel list</a>
     <h1>{{name}}</h1>
+    <div ng-click="toggle()">
+        <p ng-show="show_chart">Show as Table</p>
+        <p ng-show="!show_chart">Show as Chart</p>
+    </div>
     <div ng-repeat="widget in widgets">
         <b>{{widget.name}}</b>:{{widget.value}} 
     </div>
@@ -9,8 +14,22 @@
     <select name="number-of-hours" ng-model="number_of_hours" ng-change="test()">
         <option ng-repeat="option in options" value="{{option.value}}">{{option.name}}</option>
     </select>
-    <div id="canvas_div_id">
-
+    <div ng-show="show_chart">
+        <div id="canvas_div_id">
+    
+        </div>
+    </div>
+    <div ng-show="!show_chart">
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col" ng-repeat="field in actual_field_names">{{field}}</th>
+                </tr>
+            </thead>
+            <tr ng-repeat="row in table_data">
+                <td  ng-repeat="field in field_names">{{row[field]}}</td>
+            </tr>
+        </table>
     </div>
     <!-- <button ng-click="create()">create</button> -->
 </div>
