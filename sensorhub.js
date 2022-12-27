@@ -8,6 +8,7 @@
         'sensorhub.authentication',
         'sensorhub.home',
         'sensorhub.channel',
+        'sensorhub.util',
     ]);
 
     angular

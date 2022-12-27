@@ -4,11 +4,10 @@
         .module('sensorhub.channel.controllers')
         .controller('ChannelHomeController', ChannelHomeController);
 
-        ChannelHomeController.$inject = ['$scope', '$location', '$routeParams', 'Authentication', 'Channel'];
+        ChannelHomeController.$inject = ['$scope', '$location', '$routeParams', 'Authentication', 'Channel', 'DateUtil'];
 
-        function ChannelHomeController($scope, $location, $routeParams, Authentication, Channel){
+        function ChannelHomeController($scope, $location, $routeParams, Authentication, Channel, DateUtil){
             if(Authentication.authenticatedOrRedirect())return;
-            const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
             $scope.channel_id = $routeParams.channel_id;
             $scope.name = $routeParams.channel_id;
             $scope.show_chart = true;
@@ -61,33 +60,9 @@
                 });
             }
 
-
-            // convert raw timestamp into a more huma readbable format
-            function convert_date(raw_date){
-                const year_str = raw_date.substr(0, 4);
-                const month_str = raw_date.substr(5, 2);
-                const day_str = raw_date.substr(8, 2);
-
-                return `${months[parseInt(month_str)]} ${day_str}, ${year_str}`
-            }
-
-            function convert_time(raw_time){
-                let hour = parseInt(raw_time.substr(0, 2));
-                let timestamp = 'AM';
-                if(hour > 12){
-                    timestamp = 'PM';
-                    hour -= 12;
-                }
-
-                return `${hour}${raw_time.slice(2)} ${timestamp}`;
-            }
-
-            function processDateStr(date_str){
-                const date = convert_date(date_str.slice(0, 10));
-                const time = convert_time(date_str.slice(11, 19));
-
-                return `${date} ${time}`;
-            }
+            const convert_date = DateUtil.convert_date;
+            const convert_time = DateUtil.convert_time;
+            const processDateStr = DateUtil.processDateStr;
 
             const make_chart = (chart_data, label, id) => {
                 // create a new canvas inside the canvas div
@@ -139,30 +114,6 @@
                 return colors;
             }
             let chartDiv = document.getElementById('canvas_div_id');
-
-            const init = () =>{
-                sample_data = channel_entries.slice(-200);
-                // console.log(sample_data);
-                let temperature_data = [];
-                let humidity_data = [];
-                let date_data = [];
-                let pressure_data = [];
-                sample_data.forEach(channelEntry => {
-                    temperature_data.push(parseFloat(channelEntry["field1"]));
-                    humidity_data.push(parseFloat(channelEntry['field2']));
-                    date_data.push(convert_time(channelEntry['timestamp'].slice(11, 19)));
-                    pressure_data.push(parseFloat(channelEntry['field3']));
-                });
-                // console.log(date_data);
-                let data = {data:temperature_data, labels:date_data};
-                make_chart(data, "temperature", "id");
-                data['data'] = humidity_data;
-                make_chart(data, "humidity", "h");
-                data['pressure'] = pressure_data;
-                let myChart = make_chart(data, "pressure", "p");
-
-                // myChart.destroy();
-            }
 
             const init2 = () => {
                 sample_data = channel_entries;
