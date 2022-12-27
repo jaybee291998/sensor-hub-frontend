@@ -4,9 +4,9 @@
         .module('sensorhub.channel.controllers')
         .controller('ChannelHomeController', ChannelHomeController);
 
-        ChannelHomeController.$inject = ['$scope', '$location', '$routeParams', 'Authentication', 'Channel', 'DateUtil'];
+        ChannelHomeController.$inject = ['$scope', '$location', '$routeParams', 'Authentication', 'Channel', 'DateUtil', 'ChartUtil'];
 
-        function ChannelHomeController($scope, $location, $routeParams, Authentication, Channel, DateUtil){
+        function ChannelHomeController($scope, $location, $routeParams, Authentication, Channel, DateUtil, ChartUtil){
             if(Authentication.authenticatedOrRedirect())return;
             $scope.channel_id = $routeParams.channel_id;
             $scope.name = $routeParams.channel_id;
@@ -14,11 +14,32 @@
             $scope.table_data;
             $scope.field_names = [];
             $scope.actual_field_names = [];
+            $scope.number_of_hours = 1;
             let field_data;
-            let channel_entries;
-            let sample_data;
+            $scope.channel_entries;
             let cleaned_data = {};
+            $scope.options = [
+                {name:"1 hour", value:1},
+                {name:"2 hours", value:2},
+                {name:"3 hours", value:3},
+                {name:"4 hours", value:4},
+                {name:"5 hours", value:5},
+                {name:"6 hours", value:6},
+                {name:"7 hours", value:7},
+                {name:"8 hours", value:8},
+                {name:"9 hours", value:9},
+                {name:"10 hours", value:10},
+            ];
+            $scope.table_data = [];
+            let show_table_triggered = false;
             function get_data(){
+                let p = retrieveAllFields()
+                .then(retrieveChannelEntries)
+                .then(init2);
+                return p;
+            }
+
+            function retrieveAllFields(){
                 let p = Channel.retrieveAllFields($routeParams.channel_id);
                 p.then(function(value){
                     if(value.status < 200 || value.status > 299){
@@ -30,110 +51,70 @@
                         $scope.actual_field_names = [];
                         $scope.fields.forEach(field => $scope.actual_field_names.push(field.name));
                         $scope.actual_field_names.push('timestamp');
-                        console.log($scope.actual_field_names);
+                        // console.log($scope.actual_field_names);
                         field_data = value.data;
-                        p = Channel.retrieveAllChannelEntries($routeParams.channel_id, $scope.number_of_hours);
-                        p.then(function(value){
-                            if(value.status < 200 || value.status > 299){
-                                $scope.error = value.data.message;
-                                console.log(value);
-                            }else{
-                                console.log(value);
-                                channel_entries = value.data;
-                                $scope.table_data = value.data.map(channel_entry => {
-                                    let new_element = {...channel_entry};
-                                    new_element.timestamp = processDateStr(new_element.timestamp);
-                                    return new_element;
-                                });
-                                $scope.field_names = [];
-                                console.log($scope.table_data);
-                                for(let key in value.data[0]){
-                                    $scope.field_names.push(key);
-                                }
-                                console.log($scope.field_names);
-                                init2();
-                                // $scope.fields = value.data;
-            
+                    }
+                });
+                return p;
+            }
+
+            function retrieveChannelEntries(){
+                let p = Channel.retrieveAllChannelEntries($routeParams.channel_id, $scope.number_of_hours);
+                p.then(function(value){
+                    if(value.status < 200 || value.status > 299){
+                        $scope.error = value.data.message;
+                        // console.log(value);
+                    }else{
+                        // console.log(value);
+                        $scope.channel_entries = value.data;
+                        // convert timestamp into a more readbale format
+                        $scope.channel_entries.forEach(channel_entry => {
+                            channel_entry['timestamp'] = DateUtil.processDateStr(channel_entry['timestamp']);
+                            // to loop all through all the fields we just need to find the length of field data
+                            for(let field_num = 1; field_num <= field_data.length; field_num++){
+                                // the data of each field is origially a tring so we need to convert it into float
+                                channel_entry[`field${field_num}`] = parseFloat(channel_entry[`field${field_num}`]);
                             }
+                            
                         });
-                    }
-                });
-            }
-
-            const convert_date = DateUtil.convert_date;
-            const convert_time = DateUtil.convert_time;
-            const processDateStr = DateUtil.processDateStr;
-
-            const make_chart = (chart_data, label, id) => {
-                // create a new canvas inside the canvas div
-                const canvasDiv = document.createElement('div');
-                const ctx = document.createElement('canvas');
-                ctx.id = id;
-                
-                // create the dataset that will be used by the chart
-                let dataset = {
-                    label: label,
-                    data: chart_data.data,
-                    backgroundColor: getRandomColors(chart_data.data.length),
-                    borderWidth: 1
-                }
-    
-                // the actual chart object
-                var myChart = new Chart(ctx,{
-                    type: "line",
-                    data: {
-                        labels: chart_data.labels,
-                        datasets: [dataset]
-                    },
-                    options:{
-                        scales:{
-                            y:{
-                                // beginAtZero:true
-                            }
+                        $scope.field_names = [];
+                        // console.log($scope.table_data);
+                        for(let key in value.data[0]){
+                            $scope.field_names.push(key);
                         }
+                        // console.log($scope.field_names);
                     }
                 });
-    
-                canvasDiv.appendChild(ctx);
-                chartDiv.appendChild(canvasDiv);
-
-                return myChart;
-    
+                return p;
             }
-            // generate a random rgba color
-            const randomColor = () => {
-                var o = Math.round, r = Math.random, s = 255;
-                return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',' + r().toFixed(1) + ')';
-            }
-            // get an array of random rgba colors
-            const getRandomColors = size => {
-                var colors = []
-                for(var i = 0; i < size; i++){
-                    colors.push(randomColor());
-                }
-                return colors;
-            }
+            const make_chart = ChartUtil.make_chart
             let chartDiv = document.getElementById('canvas_div_id');
 
             const init2 = () => {
-                sample_data = channel_entries;
+                // initialize the datastructure used to seprate each field into their own arrray
                 field_data.forEach(field_data => {
                     cleaned_data[field_data.name] = {data:[]};
                 });
                 let timestamp_data = [];
-                sample_data.forEach(channelEntry => {
+                // basically for every field add their value to their own array
+                $scope.channel_entries.forEach(channelEntry => {
                     let field_num = 1;
+                    // field data contains the actual name of the fields, in the proper order
+                    // meaning the first field corresponds to field1
                     field_data.forEach(field_data => {
-                        cleaned_data[field_data.name]['data'].push(parseFloat(channelEntry[`field${field_num}`]));
+                        // the data from the server is like this [{field1:'', field2:'',...,fieldn:''}]
+                        // so to access it we need to do it this way
+                        cleaned_data[field_data.name]['data'].push(channelEntry[`field${field_num}`]);
                         field_num++;
                     });
-                    timestamp_data.push(convert_time(channelEntry['timestamp'].slice(11,19)));
+                    timestamp_data.push(channelEntry['timestamp'].slice(-10));
                 });
-                console.log(cleaned_data);
+                // console.log(cleaned_data);
 
+                // generate the charts
                 field_data.forEach(field_data => {
                     let data = {data:cleaned_data[field_data.name]['data'], labels:timestamp_data};
-                    let chart = make_chart(data, field_data.name, field_data.name);
+                    let chart = make_chart(data, field_data.name, field_data.name, chartDiv);
                     cleaned_data[field_data.name]['chart'] = chart;
                 });
 
@@ -155,32 +136,27 @@
                 chartDiv.innerHTML = "";
             }
 
-            $scope.options = [
-                {name:"1 hour", value:1},
-                {name:"2 hours", value:2},
-                {name:"3 hours", value:3},
-                {name:"4 hours", value:4},
-                {name:"5 hours", value:5},
-                {name:"6 hours", value:6},
-                {name:"7 hours", value:7},
-                {name:"8 hours", value:8},
-                {name:"9 hours", value:9},
-                {name:"10 hours", value:10},
-            ];
-
-            $scope.number_of_hours = 1;
-            
-
             $scope.test = () => {
                 console.log($scope.number_of_hours);
                 deleteCharts();
-                get_data();
+                get_data()
+                .then(()=>{
+                    if(!$scope.show_chart){
+                        $scope.table_data = $scope.channel_entries;
+                        show_table_triggered = true;
+                    }
+                });
             }
 
             get_data();
 
             $scope.toggle = () => {
                 $scope.show_chart = !$scope.show_chart;
+                if(!$scope.show_chart){
+                    $scope.table_data = $scope.channel_entries;
+                    show_table_triggered = true;
+                }
+
             }
         }
 })();

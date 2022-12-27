@@ -26,8 +26,8 @@
                     <th scope="col" ng-repeat="field in actual_field_names">{{field}}</th>
                 </tr>
             </thead>
-            <tr ng-repeat="row in table_data">
-                <td  ng-repeat="field in field_names">{{row[field]}}</td>
+            <tr ng-repeat="channel_entry in table_data">
+                <td  ng-repeat="field in field_names">{{channel_entry[field]}}</td>
             </tr>
         </table>
     </div>
