@@ -23,11 +23,11 @@
         <table class="table table-striped table-hover">
             <thead class="thead-dark">
                 <tr>
-                    <th scope="col" ng-repeat="field in actual_field_names">{{field}}</th>
+                    <th scope="col" ng-repeat="field in table_header">{{field}}</th>
                 </tr>
             </thead>
             <tr ng-repeat="channel_entry in table_data">
-                <td  ng-repeat="field in field_names">{{channel_entry[field]}}</td>
+                <td  ng-repeat="field in channel_entry">{{field}}</td>
             </tr>
         </table>
     </div>
