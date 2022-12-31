@@ -4,20 +4,17 @@
         .module('sensorhub.channel.controllers')
         .controller('ChannelHomeController', ChannelHomeController);
 
-        ChannelHomeController.$inject = ['$scope', '$location', '$routeParams', 'Authentication', 'Channel', 'DateUtil', 'ChartUtil'];
+        ChannelHomeController.$inject = ['$scope', '$location', '$routeParams', '$interval', 'Authentication', 'Channel', 'DateUtil', 'ChartUtil'];
 
-        function ChannelHomeController($scope, $location, $routeParams, Authentication, Channel, DateUtil, ChartUtil){
+        function ChannelHomeController($scope, $location, $routeParams, $interval, Authentication, Channel, DateUtil, ChartUtil){
             if(Authentication.authenticatedOrRedirect())return;
             $scope.channel_id = $routeParams.channel_id;
             $scope.name = $routeParams.channel_id;
             $scope.show_chart = true;
             $scope.table_data;
-            $scope.field_names = [];
             $scope.actual_field_names = [];
             $scope.number_of_hours = 1;
-            let field_data;
-            $scope.channel_entries;
-            let cleaned_data = {};
+            $scope.channel_entries = null;
             $scope.options = [
                 {name:"1 hour", value:1},
                 {name:"2 hours", value:2},
@@ -32,29 +29,46 @@
             ];
             $scope.table_data = [];
             $scope.table_header;
-            // $scope.widgets;
+            $scope.widgets;
             let timestamps;
             let chartData;
             let show_table_triggered = false;
-            let raw_channel_entries;
-            let raw_field_data;
-            let data;
-            $scope.chartData;
-            function get_data(){
-                i();
-                let p = retrieveAllFields()
-                .then(retrieveChannelEntries)
-                // .then(init2);
-                return p;
+            $scope.chartData = null;
+            $scope.i = 0;
+            let get_update_interval = $interval(getUpdate, 30*1000);
+
+            let stop_update_interval = () =>{
+                if(angular.isDefined(get_update_interval)){
+                    $interval.cancel(get_update_interval);
+                    get_update_interval = undefined;
+                }
             }
 
+            $scope.$on('$destroy', ()=>{
+                stop_update_interval();
+            });
+            function getUpdate(){
+                $scope.latest_time = $scope.channel_entries.at(-1).timestamp;
+                let p = Channel.retrieveChannelEntryUpdate($scope.channel_id, $scope.latest_time)
+                .then((new_raw_channel_entries)=>{
+                    // console.log(new_raw_channel_entries.data);
+                    // console.log($scope.latest_time);
+                    if(new_raw_channel_entries.data.length == 0) return;
+                    
+                    let new_channel_entries = processRawChannelEntries(new_raw_channel_entries.data, $scope.actual_field_names)
+                    new_channel_entries.forEach(new_channel_entry => $scope.channel_entries.push(new_channel_entry));
+                    updateCharts(chartData, new_channel_entries, $scope.actual_field_names);
+                });
+                return p;
+            }
             function getData(){
                 let p = Promise.all([
                     Channel.retrieveAllFields($routeParams.channel_id),
                     Channel.retrieveAllChannelEntries($routeParams.channel_id, $scope.number_of_hours),
                 ]).then(values => {
-                    raw_field_data = values[0].data;
-                    raw_channel_entries = values[1].data;
+                    let raw_field_data = values[0].data;
+                    let raw_channel_entries = values[1].data;
+                    // console.log(raw_channel_entries);
                     $scope.actual_field_names = getFieldNames(raw_field_data);
                     $scope.table_header = getFieldNames(raw_field_data);
                     $scope.table_header.push('timestamp')
@@ -90,6 +104,36 @@
                 });
                 return chartData;
             }
+
+            function updateCharts(chart_data, new_channel_entries, field_names){
+                if(chart_data==null) return;
+                let new_timestamps = getTimestamps(new_channel_entries);
+                new_timestamps.forEach(new_timestamp => timestamps.push(new_timestamp));
+                field_names.forEach(field_name => {
+                    let new_data = new_channel_entries.map(new_channel_entry => new_channel_entry[field_name]);
+                    updateChart(chartData, field_name, {data:new_data, labels:new_timestamps});
+                })
+            }
+            /**
+             * 
+             * @param {*} chart_data [{name:{data:[], name:'', id:'',chart:chart}}, ...]
+             * @param {*} chart_name 
+             * @param {*} new_data {data:[], labels:[]}
+             */
+            function updateChart(chart_data, chart_name, new_data){
+                if(chart_data == null) return;
+                let chart_dataset = chart_data[chart_name];
+                new_data.data.forEach(d => {
+                    chart_dataset.data.data.push(d);
+                    // chart_dataset.chart.data.datasets.forEach(dataset=>dataset.data.push(d));
+                });
+                new_data.labels.forEach(l=>{
+                    // chart_dataset.data.labels.push(l);
+                    // chart_dataset.chart.data.labels.push(l);
+                })
+
+                chart_dataset.chart.update();
+            }
             const deleteCharts = (chartData, chartDiv) =>{
                 for(let key in chartData){
                     chartData[key]['chart'].destroy();
@@ -97,6 +141,7 @@
                 chartDiv.innerHTML = "";
             }
             function processRawChannelEntries(raw_channel_entries, field_names){
+                if(raw_channel_entries == null) return;
                 let keys = getRawChannelEntriesKey(raw_channel_entries);
                 return raw_channel_entries.map(channelEntry => {
                     let newChannelEntry = {};

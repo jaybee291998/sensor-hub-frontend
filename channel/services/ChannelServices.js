@@ -12,6 +12,7 @@
             retrieveAll: retrieveAll,
             retrieveAllFields: retrieveAllFields,
             retrieveAllChannelEntries: retrieveAllChannelEntries,
+            retrieveChannelEntryUpdate: retrieveChannelEntryUpdate,
             createField: createField,
             createFields: createFields
         };
@@ -77,6 +78,11 @@
                 console.log(response);
                 return response;
             }
+        }
+
+        function retrieveChannelEntryUpdate(channel_id, last_timestamp){
+            return $http.get(`${myapi_link}/channel/${channel_id}/?last_entry=${last_timestamp}`)
+                .then(response => response, response => response);
         }
 
         function createField(fieldData){
