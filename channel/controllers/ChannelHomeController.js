@@ -48,15 +48,14 @@
                 stop_update_interval();
             });
             function getUpdate(){
-                $scope.latest_time = $scope.channel_entries.at(-1).timestamp;
-                let p = Channel.retrieveChannelEntryUpdate($scope.channel_id, $scope.latest_time)
+                let last_entry = $scope.channel_entries.at(-1).timestamp;
+                let p = Channel.retrieveChannelEntryUpdate($scope.channel_id, last_entry)
                 .then((new_raw_channel_entries)=>{
-                    // console.log(new_raw_channel_entries.data);
-                    // console.log($scope.latest_time);
                     if(new_raw_channel_entries.data.length == 0) return;
                     
                     let new_channel_entries = processRawChannelEntries(new_raw_channel_entries.data, $scope.actual_field_names)
                     new_channel_entries.forEach(new_channel_entry => $scope.channel_entries.push(new_channel_entry));
+                    $scope.widgets = getWidgetData($scope.actual_field_names, $scope.channel_entries.at(-1));
                     updateCharts(chartData, new_channel_entries, $scope.actual_field_names);
                 });
                 return p;
