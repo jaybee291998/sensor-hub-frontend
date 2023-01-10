@@ -241,13 +241,19 @@
             }
 
             $scope.toggleNotification = () => {
-                Notification.requestPermission();
-                $scope.notificationEnabled = !(localStorage.getItem('notificationEnabled') === 'true');
-                console.log(`Notification Enabled: ${$scope.notificationEnabled}`);
-                localStorage.setItem('notificationEnabled', $scope.notificationEnabled);
-                // console.log($scope.notificationEnabled);
-                $scope.showNotificationForm = (localStorage.getItem(`notificationSetting${$scope.channel_id}`) === null && $scope.notificationEnabled);
-                // console.log(localStorage.getItem('notificationSetting'));
+                Notification.requestPermission().then(perm => {
+                    if(perm === 'granted'){
+                        $scope.notificationEnabled = !(localStorage.getItem('notificationEnabled') === 'true');
+                        console.log(`Notification Enabled: ${$scope.notificationEnabled}`);
+                        localStorage.setItem('notificationEnabled', $scope.notificationEnabled);
+                        // console.log($scope.notificationEnabled);
+                        $scope.showNotificationForm = (localStorage.getItem(`notificationSetting${$scope.channel_id}`) === null && $scope.notificationEnabled);
+                        // console.log(localStorage.getItem('notificationSetting'));
+                    }else{
+                        console.log("Permission Denied");
+                    }
+                });
+
             }
 
             function init(){
