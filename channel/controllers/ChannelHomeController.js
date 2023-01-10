@@ -241,6 +241,7 @@
             }
 
             $scope.toggleNotification = () => {
+                Notification.requestPermission();
                 $scope.notificationEnabled = !(localStorage.getItem('notificationEnabled') === 'true');
                 console.log(`Notification Enabled: ${$scope.notificationEnabled}`);
                 localStorage.setItem('notificationEnabled', $scope.notificationEnabled);
