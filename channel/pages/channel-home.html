@@ -1,10 +1,30 @@
 <div>
     <a href="#!/channel/list">channel list</a>
-    <h1>{{name}}</h1>
-    <p>its been {{i}} seconds</p>
     <div ng-click="toggle()">
         <p ng-show="show_chart">Show as Table</p>
         <p ng-show="!show_chart">Show as Chart</p>
+    </div>
+    <div ng-click="toggleNotification()">
+        <p ng-show="!notificationEnabled">enable notification</p>
+        <p ng-show="notificationEnabled">disable notifcation</p>
+    </div>
+    <div ng-show="notificationEnabled" ng-click="toggleEdit()">
+        edit notification setting
+    </div>
+    <div ng-show="showNotificationForm || editNotificationForm">
+        <p>notification fornm</p>
+        <p ng-show="notificationTitle.length <= 0">{{notificationFormTitleErr}}</p>
+        <input type="text" name="notification-title" ng-model="notificationTitle"><br>
+        <p ng-show="selectedFields.length == 0">{{notificationFormSelectionErr}}</p>
+        <label ng-repeat="field_name in actual_field_names">
+            <input 
+                type="checkbox"
+                value="{{field_name}}"
+                ng-checked="selectedFields.indexOf(field_name) > -1"
+                ng-click="toggleSelection(field_name)"
+                >{{field_name}}</input>
+        </label>
+        <input type="button" value="save" ng-click="saveNotificationSettings()">
     </div>
     <div ng-repeat="widget in widgets">
         <b>{{widget.name}}</b>:{{widget.value}} 

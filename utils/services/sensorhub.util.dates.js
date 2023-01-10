@@ -36,6 +36,7 @@
                 timestamp = 'PM';
                 hour -= 12;
             }
+            if(hour >= 12) timestamp = 'PM';
 
             return `${hour}${raw_time.slice(2)} ${timestamp}`;
         }

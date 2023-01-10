@@ -4,9 +4,9 @@
         .module('sensorhub.channel.controllers')
         .controller('ChannelHomeController', ChannelHomeController);
 
-        ChannelHomeController.$inject = ['$scope', '$location', '$routeParams', '$interval', 'Authentication', 'Channel', 'DateUtil', 'ChartUtil'];
+        ChannelHomeController.$inject = ['$scope', '$location', '$routeParams', '$interval', '$timeout', 'Authentication', 'Channel', 'DateUtil', 'ChartUtil'];
 
-        function ChannelHomeController($scope, $location, $routeParams, $interval, Authentication, Channel, DateUtil, ChartUtil){
+        function ChannelHomeController($scope, $location, $routeParams, $interval, $timeout, Authentication, Channel, DateUtil, ChartUtil){
             if(Authentication.authenticatedOrRedirect())return;
             $scope.channel_id = $routeParams.channel_id;
             $scope.name = $routeParams.channel_id;
@@ -26,6 +26,7 @@
                 {name:"8 hours", value:8},
                 {name:"9 hours", value:9},
                 {name:"10 hours", value:10},
+                {name:"10 days", value:10*24},
             ];
             $scope.table_data = [];
             $scope.table_header;
@@ -33,8 +34,14 @@
             let timestamps;
             let chartData;
             let show_table_triggered = false;
+            let notificationData;
             $scope.chartData = null;
-            $scope.i = 0;
+            $scope.notificationEnabled;
+            $scope.showNotificationForm;
+            $scope.checkBoxModel;
+            $scope.selectedFields = [];
+            $scope.notificationTitle="";
+            $scope.editNotificationForm = false;
             let get_update_interval = $interval(getUpdate, 30*1000);
 
             let stop_update_interval = () =>{
@@ -47,16 +54,46 @@
             $scope.$on('$destroy', ()=>{
                 stop_update_interval();
             });
+
+            function showNotification(channel_entry){
+                Notification.requestPermission().then(perm =>{
+                    if(perm === "granted"){
+                        // let notificationData = JSON.parse(localStorage.getItem(`notificationSetting${$scope.channel_id}`));
+                        let body = "";
+                        notificationData.selectedFields.forEach(field_name => {
+                            body += 
+                            `${field_name}: ${channel_entry[field_name]}, `;
+                        });
+                        console.log(body);
+                        const notification = new Notification(notificationData.title, {
+                            body: body,
+                            data:{},
+                            tag: 'hey',
+                            icon: '/images/my-logo.JPG'
+                        })
+
+                        notification.addEventListener('close', e => console.log("close"));
+
+                        // setTimeout(()=>{
+                        //     notification.close();
+                        // }, 10*1000);
+                    }else{
+
+                    }
+                });
+            }
             function getUpdate(){
                 let last_entry = $scope.channel_entries.at(-1).timestamp;
                 let p = Channel.retrieveChannelEntryUpdate($scope.channel_id, last_entry)
                 .then((new_raw_channel_entries)=>{
                     if(new_raw_channel_entries.data.length == 0) return;
-                    
-                    let new_channel_entries = processRawChannelEntries(new_raw_channel_entries.data, $scope.actual_field_names)
+                    let new_channel_entries = processRawChannelEntries(new_raw_channel_entries.data, $scope.actual_field_names);
+                    console.log(`last entry: ${last_entry}`);
+                    console.log(new_channel_entries);
                     new_channel_entries.forEach(new_channel_entry => $scope.channel_entries.push(new_channel_entry));
                     $scope.widgets = getWidgetData($scope.actual_field_names, $scope.channel_entries.at(-1));
                     updateCharts(chartData, new_channel_entries, $scope.actual_field_names);
+                    if($scope.notificationEnabled) showNotification($scope.channel_entries.at(-1));
                 });
                 return p;
             }
@@ -71,7 +108,8 @@
                     $scope.actual_field_names = getFieldNames(raw_field_data);
                     $scope.table_header = getFieldNames(raw_field_data);
                     $scope.table_header.push('timestamp')
-
+                    // $scope.selectedFields = $scope.actual_field_names;
+                    // console.log($scope.actual_field_names);
                     $scope.channel_entries = processRawChannelEntries(raw_channel_entries, $scope.actual_field_names);
                     $scope.widgets = getWidgetData($scope.actual_field_names, $scope.channel_entries.at(-1));
                     timestamps = getTimestamps($scope.channel_entries);
@@ -201,5 +239,84 @@
                 }
 
             }
+
+            $scope.toggleNotification = () => {
+                $scope.notificationEnabled = !(localStorage.getItem('notificationEnabled') === 'true');
+                console.log(`Notification Enabled: ${$scope.notificationEnabled}`);
+                localStorage.setItem('notificationEnabled', $scope.notificationEnabled);
+                // console.log($scope.notificationEnabled);
+                $scope.showNotificationForm = (localStorage.getItem(`notificationSetting${$scope.channel_id}`) === null && $scope.notificationEnabled);
+                // console.log(localStorage.getItem('notificationSetting'));
+            }
+
+            function init(){
+                $scope.notificationEnabled = localStorage.getItem('notificationEnabled') === 'true';
+                console.log(`Notification Enbaled: ${$scope.notificationEnabled}`);
+                console.log(`local storage: ${localStorage.getItem('notificationEnabled')}`);
+                $scope.showNotificationForm = localStorage.getItem(`notificationSetting${$scope.channel_id}`) === null && $scope.notificationEnabled;
+                console.log(`Show form: ${$scope.showNotificationForm}`);
+            }
+
+            $scope.toggleSelection = field_name => {
+                let idx = $scope.selectedFields.indexOf(field_name);
+
+                if(idx > -1){
+                    $scope.selectedFields.splice(idx, 1);
+                }else{
+                    $scope.selectedFields.push(field_name);
+                }
+
+                console.log($scope.selectedFields);
+            }
+
+            $scope.saveNotificationSettings = () => {
+                // data validation here
+                let error = false;
+                if($scope.notificationTitle.length <= 0){
+                    $scope.notificationFormTitleErr = "Please enter a title";
+                    error = true;
+                }
+                if($scope.selectedFields.length == 0) {
+                    $scope.notificationFormSelectionErr = "Please select atleast one field";
+                    error = true;
+                }
+                if(error){
+                    $timeout(()=>{
+                        $scope.notificationFormTitleErr = "";
+                        $scope.notificationFormSelectionErr = "";
+                    }, 2000);
+                    console.log("Error in form");
+                    return;
+                }
+
+                let data = {
+                    title:$scope.notificationTitle,
+                    selectedFields: $scope.selectedFields
+                };
+                localStorage.setItem(`notificationSetting${$scope.channel_id}`, JSON.stringify(data));
+                $scope.showNotificationForm = false;
+                $scope.editNotificationForm = false;
+                $scope.loadNotificationSetting();
+                console.log(data);
+                
+            }
+
+            $scope.loadNotificationSetting = () =>{
+                // let notificationData = JSON.parse(localStorage.getItem(`notificationSettings${$scope.channel_id}`));
+                notificationData = JSON.parse(localStorage.getItem(`notificationSetting${$scope.channel_id}`));
+                console.log(notificationData);
+                if(notificationData != null){
+                    $scope.notificationTitle = notificationData.title;
+                    $scope.selectedFields = notificationData.selectedFields;
+                }
+            }
+
+            $scope.toggleEdit =() => {
+                console.log($scope.editNotificationForm);
+                $scope.editNotificationForm = !$scope.editNotificationForm;
+            }
+            // $scope.toggleNotification();
+            init();
+            $scope.loadNotificationSetting();
         }
 })();
