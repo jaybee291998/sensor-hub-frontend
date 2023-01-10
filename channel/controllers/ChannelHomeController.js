@@ -242,18 +242,18 @@
 
             $scope.toggleNotification = () => {
                 Notification.requestPermission();
-                $scope.notificationEnabled = !(localStorage.getItem('notificationEnabled') === 'true');
+                $scope.notificationEnabled = !(localStorage.getItem(`notificationEnabled${$scope.channel_id}`) === 'true');
                 console.log(`Notification Enabled: ${$scope.notificationEnabled}`);
-                localStorage.setItem('notificationEnabled', $scope.notificationEnabled);
+                localStorage.setItem(`notificationEnabled${$scope.channel_id}`, $scope.notificationEnabled);
                 // console.log($scope.notificationEnabled);
                 $scope.showNotificationForm = (localStorage.getItem(`notificationSetting${$scope.channel_id}`) === null && $scope.notificationEnabled);
                 // console.log(localStorage.getItem('notificationSetting'));
             }
 
             function init(){
-                $scope.notificationEnabled = localStorage.getItem('notificationEnabled') === 'true';
+                $scope.notificationEnabled = localStorage.getItem(`notificationEnabled${$scope.channel_id}`) === 'true';
                 console.log(`Notification Enbaled: ${$scope.notificationEnabled}`);
-                console.log(`local storage: ${localStorage.getItem('notificationEnabled')}`);
+                console.log(`local storage: ${localStorage.getItem(`notificationEnabled${$scope.channel_id}`)}`);
                 $scope.showNotificationForm = localStorage.getItem(`notificationSetting${$scope.channel_id}`) === null && $scope.notificationEnabled;
                 console.log(`Show form: ${$scope.showNotificationForm}`);
             }
