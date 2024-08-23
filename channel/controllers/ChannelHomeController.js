@@ -33,6 +33,8 @@
             $scope.widgets;
             let timestamps;
             let chartData;
+            let uplotChartData;
+            let uplotTimestamps;
             let show_table_triggered = false;
             let notificationData;
             $scope.chartData = null;
@@ -42,7 +44,7 @@
             $scope.selectedFields = [];
             $scope.notificationTitle="";
             $scope.editNotificationForm = false;
-            let get_update_interval = $interval(getUpdate, 30*1000);
+            let get_update_interval = $interval(getUpdate, 1*1000);
 
             let stop_update_interval = () =>{
                 if(angular.isDefined(get_update_interval)){
@@ -53,6 +55,8 @@
 
             $scope.$on('$destroy', ()=>{
                 stop_update_interval();
+                deleteCharts(chartData, chartDiv);
+                deleteUPlotCharts(uplotChartData, uplotChartDiv);
             });
 
             function showNotification(channel_entry){
@@ -93,6 +97,7 @@
                     new_channel_entries.forEach(new_channel_entry => $scope.channel_entries.push(new_channel_entry));
                     $scope.widgets = getWidgetData($scope.actual_field_names, $scope.channel_entries.at(-1));
                     updateCharts(chartData, new_channel_entries, $scope.actual_field_names);
+                    updateUPlotCharts(chartData, new_channel_entries, $scope.actual_field_names);
                     if($scope.notificationEnabled) showNotification($scope.channel_entries.at(-1));
                 });
                 return p;
@@ -113,8 +118,11 @@
                     $scope.channel_entries = processRawChannelEntries(raw_channel_entries, $scope.actual_field_names);
                     $scope.widgets = getWidgetData($scope.actual_field_names, $scope.channel_entries.at(-1));
                     timestamps = getTimestamps($scope.channel_entries);
+                    uplotTimestamps = getUPlotTimeStamps($scope.channel_entries);
                     chartData = getChartData($scope.channel_entries, $scope.actual_field_names, timestamps);
+                    uplotChartData = getChartDataForUPlot($scope.channel_entries, $scope.actual_field_names); 
                     generateCharts(chartData, chartDiv);
+                    generateUPlotChart(uplotChartData, uplotChartDiv, uplotTimestamps);
                     // apply digest cycle, because for some reason its not triggered
                     $scope.$apply();
                 });
@@ -142,6 +150,26 @@
                 return chartData;
             }
 
+            function getChartDataForUPlot(channel_entries, field_names){
+                let mychartData = {};
+                field_names.forEach(field_name => {
+                    let data = channel_entries.map(channelEntry => parseFloat(channelEntry[field_name]))
+                    mychartData[field_name] = {
+                        data: data,
+                        name: field_name,
+                        id: field_name,
+                        chart: null
+                    };
+                });
+                return mychartData;
+            }
+            function generateUPlotChart(uplotChartData, uplotChartDiv, uplotTimestamps){
+                for(let key in uplotChartData){
+                    let c = uplotChartData[key];
+                    let chart = ChartUtil.make_u_plot_chart(c.data, c.name, c.name, uplotChartDiv, uplotTimestamps);
+                    c['chart'] = chart; 
+                }
+            }
             function updateCharts(chart_data, new_channel_entries, field_names){
                 if(chart_data==null) return;
                 let new_timestamps = getTimestamps(new_channel_entries);
@@ -177,6 +205,41 @@
                 }
                 chartDiv.innerHTML = "";
             }
+            function updateUPlotCharts(chart_data, new_channel_entries, field_names){
+                if(chart_data==null) return;
+                let new_timestamps = getUPlotTimeStamps(new_channel_entries);
+                new_timestamps.forEach(new_timestamp => uplotTimestamps.push(new_timestamp));
+                field_names.forEach(field_name => {
+                    let new_data = new_channel_entries.map(new_channel_entry => new_channel_entry[field_name]);
+                    updateUPlotChart(uplotChartData, field_name, new_data);
+                })
+            }
+            /**
+             * 
+             * @param {*} chart_data [{name:{data:[], name:'', id:'',chart:chart}}, ...]
+             * @param {*} chart_name 
+             * @param {*} new_data {data:[], labels:[]}
+             */
+            function updateUPlotChart(uplotChartData, chart_name, new_data){
+                if(uplotChartData == null) return;
+                let chart_dataset = uplotChartData[chart_name];
+                new_data.forEach(d => {
+                    chart_dataset.data.push(d);
+                    // chart_dataset.chart.data.datasets.forEach(dataset=>dataset.data.push(d));
+                });
+                // new_data.labels.forEach(l=>{
+                //     // chart_dataset.data.labels.push(l);
+                //     // chart_dataset.chart.data.labels.push(l);
+                // })
+
+                chart_dataset.chart.setData([uplotTimestamps, chart_dataset.data]);
+            }
+            const deleteUPlotCharts = (chartData, chartDiv) =>{
+                for(let key in chartData){
+                    chartData[key]['chart'].destroy();
+                }
+                uplotChartDiv.innerHTML = "";
+            }
             function processRawChannelEntries(raw_channel_entries, field_names){
                 if(raw_channel_entries == null) return;
                 let keys = getRawChannelEntriesKey(raw_channel_entries);
@@ -194,6 +257,10 @@
 
             function getTimestamps(channelEntries){
                 return channelEntries.map(channelEntry => channelEntry['timestamp'].slice(-11));
+            }
+
+            function getUPlotTimeStamps(channelEntries) {
+                return channelEntries.map(channelEntry => new Date(channelEntry['timestamp']).getTime() / 1000);
             }
 
             function getFieldNames(field_data){
@@ -216,12 +283,11 @@
                 // console.log(widgets);
                 return widgets;
             }
-            getData();     
-            let chartDiv = document.getElementById('canvas_div_id');
 
             $scope.test = () => {
                 console.log($scope.number_of_hours);
                 deleteCharts(chartData, chartDiv);
+                deleteUPlotCharts(uplotChartData, uplotChartDiv);
                 getData()
                 .then(()=>{
                     if(!$scope.show_chart){
@@ -318,6 +384,9 @@
             }
             // $scope.toggleNotification();
             init();
+            getData();     
+            let chartDiv = document.getElementById('canvas_div_id');
             $scope.loadNotificationSetting();
+            let uplotChartDiv = document.getElementById('uplot-chart');
         }
 })();
