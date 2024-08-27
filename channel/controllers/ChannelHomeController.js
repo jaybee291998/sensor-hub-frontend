@@ -44,6 +44,7 @@
             $scope.selectedFields = [];
             $scope.notificationTitle="";
             $scope.editNotificationForm = false;
+            $scope.enableAutoUpdate = true;
             let get_update_interval = $interval(getUpdate, 1*1000);
 
             let stop_update_interval = () =>{
@@ -87,6 +88,8 @@
                 });
             }
             function getUpdate(){
+                if (!$scope.enableAutoUpdate) return;
+                if (!$scope.channel_entries) return;
                 let last_entry = $scope.channel_entries.at(-1).timestamp;
                 let p = Channel.retrieveChannelEntryUpdate($scope.channel_id, last_entry)
                 .then((new_raw_channel_entries)=>{
@@ -304,6 +307,10 @@
                     show_table_triggered = true;
                 }
 
+            }
+
+            $scope.toggleAutoUpdate = () => {
+                $scope.enableAutoUpdate = !$scope.enableAutoUpdate;
             }
 
             $scope.toggleNotification = () => {

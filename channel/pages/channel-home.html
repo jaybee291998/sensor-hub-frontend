@@ -4,6 +4,10 @@
         <p ng-show="show_chart">Show as Table</p>
         <p ng-show="!show_chart">Show as Chart</p>
     </div>
+    <div ng-click="toggleAutoUpdate()">
+        <p ng-show="!enableAutoUpdate">enable auto update</p>
+        <p ng-show="enableAutoUpdate">disable auto update</p>
+    </div>
     <div ng-click="toggleNotification()">
         <p ng-show="!notificationEnabled">enable notification</p>
         <p ng-show="notificationEnabled">disable notifcation</p>
