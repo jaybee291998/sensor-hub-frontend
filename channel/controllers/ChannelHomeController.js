@@ -99,7 +99,7 @@
                     console.log(new_channel_entries);
                     new_channel_entries.forEach(new_channel_entry => $scope.channel_entries.push(new_channel_entry));
                     $scope.widgets = getWidgetData($scope.actual_field_names, $scope.channel_entries.at(-1));
-                    updateCharts(chartData, new_channel_entries, $scope.actual_field_names);
+                    // updateCharts(chartData, new_channel_entries, $scope.actual_field_names);
                     updateUPlotCharts(chartData, new_channel_entries, $scope.actual_field_names);
                     if($scope.notificationEnabled) showNotification($scope.channel_entries.at(-1));
                 });
@@ -120,11 +120,11 @@
                     // console.log($scope.actual_field_names);
                     $scope.channel_entries = processRawChannelEntries(raw_channel_entries, $scope.actual_field_names);
                     $scope.widgets = getWidgetData($scope.actual_field_names, $scope.channel_entries.at(-1));
-                    timestamps = getTimestamps($scope.channel_entries);
+                    // timestamps = getTimestamps($scope.channel_entries);
                     uplotTimestamps = getUPlotTimeStamps($scope.channel_entries);
-                    chartData = getChartData($scope.channel_entries, $scope.actual_field_names, timestamps);
+                    // chartData = getChartData($scope.channel_entries, $scope.actual_field_names, timestamps);
                     uplotChartData = getChartDataForUPlot($scope.channel_entries, $scope.actual_field_names); 
-                    generateCharts(chartData, chartDiv);
+                    // generateCharts(chartData, chartDiv);
                     generateUPlotChart(uplotChartData, uplotChartDiv, uplotTimestamps);
                     // apply digest cycle, because for some reason its not triggered
                     $scope.$apply();
